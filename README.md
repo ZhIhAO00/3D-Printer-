@@ -1,17 +1,14 @@
 # Layerline Print Queue
 
-A small browser-based queue dashboard for scheduling jobs across a sample Bambu Lab printer fleet.
+A Bambu Lab printer queue dashboard backed by Neon Postgres and Vercel serverless functions.
 
-## Run it
+## Deploy to Vercel with Neon
 
-Open `index.html` in a modern browser. No build step or dependencies are required.
+1. Import this GitHub repository into Vercel, or link the folder with the Vercel CLI.
+2. Create or select a Neon Postgres database in the Vercel project integrations. Add `DATABASE_URL` as a Vercel environment variable (use the pooled connection string from Neon; keep it server-side).
+3. Run [`migrations/001_create_jobs.sql`](migrations/001_create_jobs.sql) against that Neon database once.
+4. Redeploy. The app reads bookings from `/api/jobs` and writes new bookings to Neon. `GET /api/printers` supplies the starter fleet; edit `api/printers.js` to match your printers.
 
-## Features
+For local development, install Node.js, run `npm install`, copy `.env.example` to `.env` with your Neon connection string, run the migration against the same database, then run `npm run dev`.
 
-- Choose a workshop date and start time in 30-minute increments.
-- Record a project name, estimated print duration, material, and requester.
-- Get a printer suggestion based on scheduled job hours.
-- Hide times that overlap another booking on the selected printer.
-- Save bookings in the current browser with local storage.
-
-The included printer fleet and queue entries are sample data. This standalone demo does not connect to Bambu Lab printers or synchronize bookings across users or devices.
+The API validates bookings and rejects overlapping reservations on the same printer. The queue is shared by everyone who can access the app; add authentication before using it with sensitive or private workshop data.
