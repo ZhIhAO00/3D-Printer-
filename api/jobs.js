@@ -11,7 +11,7 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const jobs = await sql`SELECT id, project, person, printer, start_time AS start, duration, material, status, job_date AS date FROM jobs ORDER BY job_date, start_time`;
+      const jobs = await sql`SELECT id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, material, status, to_char(job_date, 'YYYY-MM-DD') AS date FROM jobs ORDER BY job_date, start_time`;
       return respond(res, 200, { jobs });
     }
 
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
             AND ${start}::time < j.start_time + j.duration * interval '1 hour'
             AND j.start_time < ${start}::time + ${Number(duration)} * interval '1 hour'
         )
-        RETURNING id, project, person, printer, start_time AS start, duration, material, status, job_date AS date`;
+        RETURNING id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, material, status, to_char(job_date, 'YYYY-MM-DD') AS date`;
       if (!job) return respond(res, 409, { error: 'That printer already has a booking during this time. Refresh the queue and choose another slot.' });
       return respond(res, 201, { job });
     }
