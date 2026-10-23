@@ -21,6 +21,10 @@ export default async function handler(req, res) {
         return respond(res, 400, { error: 'Please provide valid booking details.' });
       }
 
+      const [availablePrinter] = await sql`SELECT id FROM printers WHERE id = ${printer.trim()} AND enabled = true`;
+      if (!availablePrinter) return respond(res, 400, { error: 'That printer is currently unavailable. Refresh the printer list and choose another.' });
+      await sql`INSERT INTO queue_users (name) VALUES (${person.trim()}) ON CONFLICT (name) DO NOTHING`;
+
       const [job] = await sql`
         INSERT INTO jobs (project, person, printer, start_time, duration, material, job_date)
         SELECT ${project.trim()}, ${person.trim()}, ${printer.trim()}, ${start}::time, ${Number(duration)}, ${material.trim()}, ${date}::date
