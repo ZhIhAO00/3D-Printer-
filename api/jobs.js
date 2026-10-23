@@ -43,6 +43,8 @@ export default async function handler(req, res) {
     return respond(res, 405, { error: 'Method not allowed.' });
   } catch (error) {
     console.error('Queue API error:', error);
+    if (error.code === '42P01') return respond(res, 503, { error: 'Queue table is missing. Run migrations/001_create_jobs.sql in Neon.' });
+    if (error.code === '42703') return respond(res, 503, { error: 'Database schema is out of date. Run the latest SQL migrations in Neon.' });
     return respond(res, 500, { error: 'The queue could not be loaded or saved.' });
   }
 }
