@@ -1,9 +1,15 @@
-export default function handler(_req, res) {
-  res.setHeader('Cache-Control', 'public, max-age=300');
-  res.status(200).json({ printers: [
-    { id: 'P1', name: 'Bambu Lab X1 Carbon', unit: 'Printer 01', state: 'Available', hours: 0, color: '#6883a8' },
-    { id: 'P2', name: 'Bambu Lab P1S', unit: 'Printer 02', state: 'Available', hours: 0, color: '#57a47d' },
-    { id: 'P3', name: 'Bambu Lab A1', unit: 'Printer 03', state: 'Available', hours: 0, color: '#d89a58' },
-    { id: 'P4', name: 'Bambu Lab P1P', unit: 'Printer 04', state: 'Available', hours: 0, color: '#9b7db0' }
-  ] });
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL);
+
+export default async function handler(_req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  if (!process.env.DATABASE_URL) return res.status(503).json({ error: 'Database is not configured.' });
+  try {
+    const printers = await sql`SELECT id, name, unit, color, 'Configured' AS state, 0 AS hours FROM printers WHERE enabled = true ORDER BY id`;
+    return res.status(200).json({ printers });
+  } catch (error) {
+    console.error('Printer settings error:', error);
+    return res.status(500).json({ error: 'Printer settings could not be loaded.' });
+  }
 }
