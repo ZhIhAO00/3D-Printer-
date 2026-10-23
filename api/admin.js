@@ -55,6 +55,8 @@ export default async function handler(req, res) {
     return reply(res, 405, { error: 'Method not allowed.' });
   } catch (error) {
     console.error('Admin settings error:', error);
-    return reply(res, 500, { error: 'Settings could not be saved. Check for duplicate names and try again.' });
+    if (error.code === '23505') return reply(res, 409, { error: 'That name is already in the saved users list. Choose a unique name.' });
+    if (error.code === '42P01' || error.code === '42703') return reply(res, 503, { error: 'Admin tables are missing. Run migrations/002_admin_settings.sql in the Neon SQL Editor, then redeploy.' });
+    return reply(res, 500, { error: 'Settings could not be saved. Check the Vercel function logs for the database error.' });
   }
 }
