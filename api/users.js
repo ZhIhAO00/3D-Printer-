@@ -14,6 +14,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ users });
   } catch (error) {
     console.error('Saved users error:', error);
+    if (error.code === '42P01' || error.code === '42703') return res.status(503).json({ error: 'Saved users table is missing. Run migrations/002_admin_settings.sql in Neon.' });
     return res.status(500).json({ error: 'Saved names could not be loaded.' });
   }
 }
