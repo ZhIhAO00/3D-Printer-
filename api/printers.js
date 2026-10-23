@@ -10,6 +10,7 @@ export default async function handler(_req, res) {
     return res.status(200).json({ printers });
   } catch (error) {
     console.error('Printer settings error:', error);
+    if (error.code === '42P01' || error.code === '42703') return res.status(503).json({ error: 'Printer settings table is missing. Run migrations/002_admin_settings.sql in Neon.' });
     return res.status(500).json({ error: 'Printer settings could not be loaded.' });
   }
 }
