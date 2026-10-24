@@ -51,6 +51,9 @@ test('utilization reports per-printer booked time over a selected date range', (
   assert.match(html, /capacity=days\*24/);
   assert.match(html, /Math\.max\(0,Math\.min\(end,rangeEnd\)-Math\.max\(start,rangeStart\)\)/);
   assert.match(html, /not live machine telemetry/);
+  assert.match(html, /<th>No of Print<\/th><th>Total Print Time<\/th>/);
+  assert.match(html, /'Overall Total Print Time'/);
+  assert.match(html, /'Overall Utilization'/);
 });
 
 test('workspace markup contains no visible escaped newline text', () => {
