@@ -35,9 +35,9 @@ export default async function handler(req, res) {
         SELECT ${project.trim()}, ${person.trim()}, ${printer.trim()}, ${start}::time, ${Number(duration)}, ${filament}, ${purpose}, ${filament}, ${filamentColor.trim()}, ${date}::date
         WHERE NOT EXISTS (
           SELECT 1 FROM jobs j
-          WHERE j.printer = ${printer.trim()} AND j.job_date = ${date}::date
-            AND ${start}::time < j.start_time + j.duration * interval '1 hour'
-            AND j.start_time < ${start}::time + ${Number(duration)} * interval '1 hour'
+          WHERE j.printer = ${printer.trim()} AND j.status <> 'Complete'
+            AND (${date}::date + ${start}::time) < (j.job_date + j.start_time + j.duration * interval '1 hour')
+            AND (j.job_date + j.start_time) < (${date}::date + ${start}::time + ${Number(duration)} * interval '1 hour')
         )
         RETURNING id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, purpose, filament, filament_color, status, to_char(job_date, 'YYYY-MM-DD') AS date`;
       if (!job) return respond(res, 409, { error: 'That printer already has a booking during this time. Refresh the queue and choose another slot.' });
