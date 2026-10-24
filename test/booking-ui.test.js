@@ -15,14 +15,18 @@ test('Printers navigation opens the P2S and X2D fleet catalog', () => {
   assert.ok(existsSync(new URL('../assets/bambu-x2d.jpg', import.meta.url)));
 });
 
-test('Schedule navigation targets the 24-hour calendar', () => {
-  assert.match(html, /<a href="#schedule"[^>]*>[\s\S]*?Schedule/);
-  assert.match(html, /class="panel printer-schedule workspace-view" id="schedule"[^>]*hidden/);
+test('Print queue includes the 24-hour availability calendar', () => {
+  assert.match(html, /<a href="#queue"[^>]*>[\s\S]*?Print queue/);
+  assert.match(html, /class="panel printer-schedule workspace-view" id="queueSchedule"[^>]*hidden/);
+  assert.doesNotMatch(html, /<a href="#schedule"/);
   assert.match(html, /for\(let hour=0;hour<=24;hour\+=4\)/);
 });
 
-test('workspace navigation separates queue, fleet, and schedule views', () => {
+test('workspace has only Print queue and Printers views', () => {
   assert.match(html, /<div class="content-grid workspace-view" id="queue">/);
+  assert.match(html, /section\.id==='queueSchedule'\?view!=='queue'/);
+  assert.match(html, /view=requested==='printers'\?'printers':'queue'/);
+  assert.doesNotMatch(html, /requested==='schedule'|schedule:'Schedule'/);
   assert.match(html, /function showWorkspaceView\(\)/);
   assert.match(html, /addEventListener\('hashchange',showWorkspaceView\)/);
 });
