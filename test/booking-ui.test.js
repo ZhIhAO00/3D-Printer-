@@ -32,6 +32,11 @@ test('workspace has only Print queue and Printers views', () => {
   assert.match(html, /addEventListener\('hashchange',showWorkspaceView\)/);
 });
 
+test('workspace markup contains no visible escaped newline text', () => {
+  const markup = html.split('<script>')[0];
+  assert.doesNotMatch(markup, /\\\\n/);
+});
+
 test('booking form receives more room than the upcoming queue', () => {
   assert.match(html, /\.content-grid\{display:grid;grid-template-columns:minmax\(0,\.8fr\) minmax\(460px,1\.2fr\)/);
   assert.match(html, /class="two-col booking-fields"/);
