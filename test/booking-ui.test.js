@@ -64,3 +64,10 @@ test('booking name uses a purpose-style dropdown with an add-new-name option', (
   assert.doesNotMatch(html, /<datalist id="userSuggestions"/);
 });
 
+test('successful booking clears all form choices and the workspace printer badge is removed', () => {
+  assert.match(html, /function resetBookingForm\(\)\{[\s\S]*?\['date','slotValue','durationHours','durationMinutes','name','newName','purpose','filament','filamentColor'\]/);
+  assert.match(html, /resetBookingForm\(\)\}catch\(error\)/);
+  assert.doesNotMatch(html, /id="navPrinterCount"/);
+  assert.doesNotMatch(html, /getElementById\('navPrinterCount'\)/);
+});
+
