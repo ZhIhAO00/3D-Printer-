@@ -97,7 +97,7 @@
     const list=document.getElementById('queueList');list.innerHTML='';
     const visibleJobs=jobs.filter(job=>PrintBooking.isCurrentOrFuture(job,Date.now(),localDate(new Date())));
     const sorted=visibleJobs.slice().sort((a,b)=>(a.date||localDate(today)).localeCompare(b.date||localDate(today))||a.start.localeCompare(b.start));
-    if(!ordered.length){list.innerHTML='<div class="empty"><b>Queue is clear</b>Add a print to reserve a machine.</div>'}
+    if(!sorted.length){list.innerHTML='<div class="empty"><b>Queue is clear</b>Add a print to reserve a machine.</div>'}
     else sorted.forEach((job,index)=>{
       const printer=printers.find(p=>p.id===job.printer),row=document.createElement('div');row.className='queue-item';
       row.innerHTML=`<div class="queue-number">${String(index+1).padStart(2,'0')}</div><div class="job-details"><div class="job-name"></div><div class="job-meta"><span class="printer-dot"></span><span class="printer-name"></span><span>·</span><span class="person-name"></span></div><div class="job-extra"></div></div><div class="job-right"><div class="job-time"></div><div class="job-state ${job.status==='Queued'?'waiting':''}">${job.status}</div></div>`;

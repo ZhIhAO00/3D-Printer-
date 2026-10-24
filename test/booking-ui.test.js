@@ -78,3 +78,9 @@ test('printer choices keep the availability order and show the requested machine
   assert.doesNotMatch(html, /LIGHTEST QUEUE|sort\(\(a,b\)=>loadFor\(a\)-loadFor\(b\)\)/);
 });
 
+test('printer rendering does not reference queue-local variables', () => {
+  const renderQueue = html.match(/function renderQueue\(\)\{[\s\S]*?\n  function filterQueueRows/)[0];
+  assert.match(renderQueue, /if\(!sorted\.length\)/);
+  assert.doesNotMatch(renderQueue, /ordered/);
+});
+
