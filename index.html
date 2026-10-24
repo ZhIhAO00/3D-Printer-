@@ -92,7 +92,8 @@
   function formatDuration(hours){const total=Math.round(Number(hours)*60),whole=Math.floor(total/60),minutes=total%60;return minutes?(whole?whole+"h ":"")+minutes+"m":whole+"h"}
   function renderQueue(){
     const list=document.getElementById('queueList');list.innerHTML='';
-    const sorted=[...jobs].sort((a,b)=>(a.date||localDate(today)).localeCompare(b.date||localDate(today))||a.start.localeCompare(b.start));
+    const visibleJobs=jobs.filter(job=>PrintBooking.isCurrentOrFuture(job,Date.now(),localDate(new Date())));
+    const sorted=visibleJobs.slice().sort((a,b)=>(a.date||localDate(today)).localeCompare(b.date||localDate(today))||a.start.localeCompare(b.start));
     if(!sorted.length){list.innerHTML='<div class="empty"><b>Queue is clear</b>Add a print to reserve a machine.</div>'}
     else sorted.forEach((job,index)=>{
       const printer=printers.find(p=>p.id===job.printer),row=document.createElement('div');row.className='queue-item';
@@ -101,14 +102,14 @@
       row.querySelector('.job-extra').textContent=`${job.purpose||'Testing'} · ${job.filament||job.material||'Filament not set'} · ${job.filament_color||'Color not set'} · ${formatDuration(Number(job.duration))}`;
       const dateLabel=job.date&&job.date!==localDate(today)?`${new Intl.DateTimeFormat('en',{month:'short',day:'numeric'}).format(new Date(`${job.date}T12:00:00`))} · `:'';row.querySelector('.job-time').textContent=dateLabel+formatClock(job.start);if(adminUnlocked){const remove=document.createElement('button');remove.type='button';remove.className='clear-button';remove.textContent='Remove';remove.setAttribute('aria-label',`Remove ${job.project} from queue`);remove.addEventListener('click',()=>removeQueueJob(job));row.querySelector('.job-right').appendChild(remove)}list.appendChild(row)
     });
-    document.getElementById('queueBadge').textContent=`${String(jobs.length).padStart(2,'0')} JOB${jobs.length===1?'':'S'}`
+    document.getElementById('queueBadge').textContent=`${String(visibleJobs.length).padStart(2,'0')} JOB${visibleJobs.length===1?'':'S'}`
   }
   function filterQueueRows(){const query=document.getElementById('queueSearch').value.trim().toLowerCase(),status=document.getElementById('queueStatus').value;document.querySelectorAll('#queueList .queue-item').forEach(row=>{const matchesText=row.textContent.toLowerCase().includes(query),matchesStatus=status==='all'||row.querySelector('.job-state').textContent===status;row.hidden=!(matchesText&&matchesStatus)})}
   const queueObserver=new MutationObserver(filterQueueRows);queueObserver.observe(document.getElementById('queueList'),{childList:true});document.getElementById('queueSearch').addEventListener('input',filterQueueRows);document.getElementById('queueStatus').addEventListener('change',filterQueueRows);document.getElementById('refreshQueue').addEventListener('click',loadSharedData);
   function formatClock(value){return new Intl.DateTimeFormat('en',{hour:'numeric',minute:'2-digit'}).format(new Date(`2000-01-01T${String(value).slice(0,5)}:00`))}
   function minuteClock(value){const minute=((value%1440)+1440)%1440;return formatClock(`${pad(Math.floor(minute/60))}:${pad(minute%60)}`)}
   function renderPrinterSchedule(){
-    const date=document.getElementById('scheduleDate').value;
+    const date=document.getElementById('scheduleDate').value,now=Date.now(),todayDate=localDate(new Date());
     if(!date)return;
     const axis=document.getElementById('scheduleAxis'),rows=document.getElementById('printerCalendarRows');
     const dayStart=new Date(`${date}T00:00:00`),dayEnd=new Date(dayStart);dayEnd.setDate(dayEnd.getDate()+1);
@@ -117,9 +118,8 @@
     axis.replaceChildren();rows.replaceChildren();
     for(let hour=0;hour<=24;hour+=4){const tick=document.createElement('span');tick.style.left=`${hour/24*100}%`;tick.textContent=hour===0||hour===24?'12 AM':hour===12?'12 PM':hour<12?`${hour} AM`:`${hour-12} PM`;axis.appendChild(tick)}
     document.getElementById('navPrinterCount').textContent=String(printers.length).padStart(2,'0');
-    const now=Date.now(),todayDate=localDate(new Date());
     printers.forEach(printer=>{
-      const printerJobs=jobs.filter(job=>job.printer===printer.id).map(job=>({...job,...jobInterval(job)})).filter(job=>job.start<dayEndMs&&job.end>dayStartMs).sort((a,b)=>a.start-b.start);
+      const printerJobs=jobs.filter(job=>job.printer===printer.id&&PrintBooking.isCurrentOrFuture(job,now,todayDate)).map(job=>({...job,...jobInterval(job)})).filter(job=>job.start<dayEndMs&&job.end>dayStartMs).sort((a,b)=>a.start-b.start);
       const activeJobs=printerJobs.filter(job=>job.status!=='Complete'),row=document.createElement('div');row.className='printer-day-row';
       const info=document.createElement('div');info.className='printer-day-info';const name=document.createElement('div');name.className='printer-day-name';name.textContent=printer.name;
       const unit=document.createElement('div');unit.className='printer-day-unit';unit.textContent=printer.unit+" · "+printerJobs.length+" task"+(printerJobs.length===1?"":"s")+" on this day";const badge=document.createElement('div');badge.className='printer-day-status';const detail=document.createElement('div');detail.className='printer-day-detail';

@@ -33,3 +33,12 @@ test('detects a booking that crosses midnight and rejects a next-morning overlap
 test('allows a booking to start exactly when the previous job ends', () => {
   assert.equal(api.intervalsOverlap('2026-10-12', '17:30', 15.5, '2026-10-13', '09:00', 2), false);
 });
+
+test('completed or expired bookings are no longer active in queue views', () => {
+  const job = { ...base, status: 'Queued' };
+  const end = new Date(`${job.date}T${job.start}:00`).getTime() + Number(job.duration) * 3600000;
+  assert.equal(api.isCurrentOrFuture(job, end - 1), true);
+  assert.equal(api.isCurrentOrFuture(job, end), false);
+  assert.equal(api.isCurrentOrFuture({ ...job, status: 'Complete' }, end - 3600000), false);
+});
+

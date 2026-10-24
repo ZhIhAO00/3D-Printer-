@@ -37,6 +37,12 @@ test('workspace markup contains no visible escaped newline text', () => {
   assert.doesNotMatch(markup, /\\\\n/);
 });
 
+test('expired and completed jobs are filtered from queue and printer schedule views', () => {
+  assert.match(html, /visibleJobs=jobs\.filter\(job=>PrintBooking\.isCurrentOrFuture/);
+  assert.match(html, /printerJobs=jobs\.filter\(job=>job\.printer===printer\.id&&PrintBooking\.isCurrentOrFuture/);
+  assert.match(html, /queueBadge'\)\.textContent=`\$\{String\(visibleJobs\.length\)/);
+});
+
 test('booking form receives more room than the upcoming queue', () => {
   assert.match(html, /\.content-grid\{display:grid;grid-template-columns:minmax\(0,\.8fr\) minmax\(460px,1\.2fr\)/);
   assert.match(html, /class="two-col booking-fields"/);
