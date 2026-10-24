@@ -56,3 +56,11 @@ test('booking form accepts a minute-level start and separate duration hours/minu
   assert.doesNotMatch(html, /id="optionDurations"|id="optionTimes"/);
 });
 
+test('booking name uses a purpose-style dropdown with an add-new-name option', () => {
+  assert.match(html, /<label for="name">3\. Who is booking\?<\/label><select id="name" name="name" required>/);
+  assert.match(html, /addNew\.value='__new_user__';addNew\.textContent='Enter a new name…'/);
+  assert.match(html, /function getBookingName\(\)/);
+  assert.match(html, /newName'\)\.addEventListener\('input'.*layerline\.userName/s);
+  assert.doesNotMatch(html, /<datalist id="userSuggestions"/);
+});
+
