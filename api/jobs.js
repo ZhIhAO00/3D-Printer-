@@ -31,8 +31,8 @@ export default async function handler(req, res) {
       await sql`INSERT INTO queue_users (name) VALUES (${person.trim()}) ON CONFLICT (name) DO NOTHING`;
 
       const [job] = await sql`
-        INSERT INTO jobs (project, person, printer, start_time, duration, purpose, filament, filament_color, job_date)
-        SELECT ${project.trim()}, ${person.trim()}, ${printer.trim()}, ${start}::time, ${Number(duration)}, ${purpose}, ${filament}, ${filamentColor.trim()}, ${date}::date
+        INSERT INTO jobs (project, person, printer, start_time, duration, material, purpose, filament, filament_color, job_date)
+        SELECT ${project.trim()}, ${person.trim()}, ${printer.trim()}, ${start}::time, ${Number(duration)}, ${filament}, ${purpose}, ${filament}, ${filamentColor.trim()}, ${date}::date
         WHERE NOT EXISTS (
           SELECT 1 FROM jobs j
           WHERE j.printer = ${printer.trim()} AND j.job_date = ${date}::date
