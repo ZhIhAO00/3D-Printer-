@@ -86,7 +86,7 @@
   function localDate(date){return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`}
   const today=new Date();document.getElementById('date').min=localDate(today);document.getElementById('date').value=localDate(today);document.getElementById('scheduleDate').value=localDate(today);document.getElementById('name').value=localStorage.getItem('layerline.userName')||'';
   document.getElementById('today').textContent=new Intl.DateTimeFormat('en',{weekday:'short',month:'short',day:'numeric',year:'numeric'}).format(today).toUpperCase();
-  function tick(){document.getElementById('clock').textContent=new Intl.DateTimeFormat('en',{hour:'numeric',minute:'2-digit'}).format(new Date())}tick();setInterval(tick,30000);
+  function tick(){document.getElementById('clock').textContent=new Intl.DateTimeFormat('en',{hour:'numeric',minute:'2-digit'}).format(new Date());renderPrinterSchedule()}tick();setInterval(tick,30000);
   function renderQueue(){
     const list=document.getElementById('queueList');list.innerHTML='';
     const sorted=[...jobs].sort((a,b)=>(a.date||localDate(today)).localeCompare(b.date||localDate(today))||a.start.localeCompare(b.start));
