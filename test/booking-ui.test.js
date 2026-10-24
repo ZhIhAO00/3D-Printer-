@@ -71,3 +71,10 @@ test('successful booking clears all form choices and the workspace printer badge
   assert.doesNotMatch(html, /getElementById\('navPrinterCount'\)/);
 });
 
+test('printer choices keep the availability order and show the requested machine names', () => {
+  assert.match(html, /printerSelectionNames=\{P1:'Bambu Lab P2S - 079',P2:'Bambu Lab P2S - 857',P3:'Bambu Lab X2D - 765'\}/);
+  assert.match(html, /ordered=\[\.\.\.printers\]\.sort\(\(a,b\)=>a\.id\.localeCompare\(b\.id\)\)/);
+  assert.match(html, /textContent=printerSelectionNames\[p\.id\]\|\|p\.name/);
+  assert.doesNotMatch(html, /LIGHTEST QUEUE|sort\(\(a,b\)=>loadFor\(a\)-loadFor\(b\)\)/);
+});
+
