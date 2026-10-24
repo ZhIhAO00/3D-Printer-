@@ -11,13 +11,15 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const jobs = await sql`SELECT id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, material, status, to_char(job_date, 'YYYY-MM-DD') AS date FROM jobs ORDER BY job_date, start_time`;
+      const jobs = await sql`SELECT id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, purpose, filament, filament_color, status, to_char(job_date, 'YYYY-MM-DD') AS date FROM jobs ORDER BY job_date, start_time`;
       return respond(res, 200, { jobs });
     }
 
     if (req.method === 'POST') {
-      const { project, person, printer, start, duration, material, date } = req.body || {};
-      if (![project, person, printer, start, material, date].every(v => typeof v === 'string' && v.trim()) || !Number.isFinite(Number(duration)) || Number(duration) <= 0 || Number(duration) > 48 || !/^\d{2}:\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const { project, person, printer, start, duration, purpose, filament, filamentColor, date } = req.body || {};
+      const purposes = ['Testing', 'MO Project', 'CR Project', 'New Product', 'Nice Project'];
+      const filaments = ['PLA-Basic', 'PLA-Matte', 'PETG-Basic', 'PETG-HF', 'ABS', 'ABS-GF', 'TPU 90A', 'Onyx'];
+      if (![project, person, printer, start, purpose, filament, filamentColor, date].every(v => typeof v === 'string' && v.trim()) || !purposes.includes(purpose) || !filaments.includes(filament) || !Number.isFinite(Number(duration)) || Number(duration) <= 0 || Number(duration) > 48 || !/^\d{2}:\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return respond(res, 400, { error: 'Please provide valid booking details.' });
       }
 
@@ -26,15 +28,15 @@ export default async function handler(req, res) {
       await sql`INSERT INTO queue_users (name) VALUES (${person.trim()}) ON CONFLICT (name) DO NOTHING`;
 
       const [job] = await sql`
-        INSERT INTO jobs (project, person, printer, start_time, duration, material, job_date)
-        SELECT ${project.trim()}, ${person.trim()}, ${printer.trim()}, ${start}::time, ${Number(duration)}, ${material.trim()}, ${date}::date
+        INSERT INTO jobs (project, person, printer, start_time, duration, purpose, filament, filament_color, job_date)
+        SELECT ${project.trim()}, ${person.trim()}, ${printer.trim()}, ${start}::time, ${Number(duration)}, ${purpose}, ${filament}, ${filamentColor.trim()}, ${date}::date
         WHERE NOT EXISTS (
           SELECT 1 FROM jobs j
           WHERE j.printer = ${printer.trim()} AND j.job_date = ${date}::date
             AND ${start}::time < j.start_time + j.duration * interval '1 hour'
             AND j.start_time < ${start}::time + ${Number(duration)} * interval '1 hour'
         )
-        RETURNING id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, material, status, to_char(job_date, 'YYYY-MM-DD') AS date`;
+        RETURNING id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, purpose, filament, filament_color, status, to_char(job_date, 'YYYY-MM-DD') AS date`;
       if (!job) return respond(res, 409, { error: 'That printer already has a booking during this time. Refresh the queue and choose another slot.' });
       return respond(res, 201, { job });
     }
