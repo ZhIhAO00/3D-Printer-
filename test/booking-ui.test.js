@@ -24,6 +24,7 @@ test('Print queue includes the 24-hour availability calendar', () => {
 
 test('workspace has only Print queue and Printers views', () => {
   assert.match(html, /<div class="content-grid workspace-view" id="queue">/);
+  assert.match(html, /\.workspace-view\[hidden\]\{display:none!important\}/);
   assert.match(html, /section\.id==='queueSchedule'\?view!=='queue'/);
   assert.match(html, /view=requested==='printers'\?'printers':'queue'/);
   assert.doesNotMatch(html, /requested==='schedule'|schedule:'Schedule'/);
