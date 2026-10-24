@@ -1,0 +1,4 @@
+ALTER TABLE jobs
+  ADD COLUMN IF NOT EXISTS purpose text NOT NULL DEFAULT 'Testing',
+  ADD COLUMN IF NOT EXISTS filament text NOT NULL DEFAULT 'PLA-Basic',
+  ADD COLUMN IF NOT EXISTS filament_color text NOT NULL DEFAULT 'Unspecified';
