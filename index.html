@@ -36,12 +36,6 @@
     <div class="topbar"><div class="crumb">Workspace <span style="padding:0 7px;color:#b8bdb5">/</span><b>Print queue</b></div><div class="top-actions"><span class="clock" id="clock"></span><button class="help" title="Queue help" aria-label="Queue help">?</button><button class="gear" id="adminGear" type="button" title="Admin settings" aria-label="Open admin settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1a1.8 1.8 0 1 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.3a1.8 1.8 0 1 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 1 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3H3.7a1.8 1.8 0 1 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 1 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.3a1.8 1.8 0 1 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 1 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.3a1.8 1.8 0 1 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z"/></svg></button></div></div>
     <div class="eyebrow">Workshop operations</div>
     <div class="heading"><div><h1>Print queue</h1><p>Plan jobs across your Bambu Lab printer fleet.</p></div><div class="date-chip" id="today"></div></div>
-    <section class="metrics" aria-label="Queue overview">
-      <div class="metric"><div class="metric-head"><span>Printers in fleet</span><span>ACTIVE FLEET</span></div><div class="metric-value" id="activeCount">03<small>printers</small></div><div class="metric-progress"><i style="width:100%"></i></div></div>
-      <div class="metric"><div class="metric-head"><span>Jobs in queue</span><span>ALL MACHINES</span></div><div class="metric-value" id="jobCount">06</div></div>
-      <div class="metric"><div class="metric-head"><span>Next available</span><span>LOCAL TIME</span></div><div class="metric-value" id="nextAvailable">10:30<small>AM</small></div></div>
-      <div class="metric"><div class="metric-head"><span>Estimated queue</span><span>REMAINING</span></div><div class="metric-value" id="queueHours">8.4<small>hours</small></div></div>
-    </section>
     <section class="panel printer-schedule" id="printers" aria-labelledby="printerCalendarTitle">
       <div class="panel-title schedule-title"><div><h2 id="printerCalendarTitle">Printer availability</h2><p>Daily booking schedule for each printer</p></div><div class="schedule-controls"><button class="tool-button" id="schedulePrev" type="button" aria-label="Previous day">←</button><input class="input" id="scheduleDate" type="date" aria-label="Schedule date"><button class="tool-button" id="scheduleToday" type="button">Today</button><button class="tool-button" id="scheduleNext" type="button" aria-label="Next day">→</button></div></div>
       <div class="schedule-scroll"><div class="schedule-board"><div class="schedule-axis-row"><div class="schedule-axis-label">PRINTER · STATUS</div><div class="schedule-axis" id="scheduleAxis"></div></div><div id="printerCalendarRows"></div></div></div>
@@ -98,8 +92,7 @@
       row.querySelector('.job-extra').textContent=`${job.purpose||'Testing'} · ${job.filament||job.material||'Filament not set'} · ${job.filament_color||'Color not set'} · ${Number(job.duration)}h`;
       const dateLabel=job.date&&job.date!==localDate(today)?`${new Intl.DateTimeFormat('en',{month:'short',day:'numeric'}).format(new Date(`${job.date}T12:00:00`))} · `:'';row.querySelector('.job-time').textContent=dateLabel+formatClock(job.start);if(adminUnlocked){const remove=document.createElement('button');remove.type='button';remove.className='clear-button';remove.textContent='Remove';remove.setAttribute('aria-label',`Remove ${job.project} from queue`);remove.addEventListener('click',()=>removeQueueJob(job));row.querySelector('.job-right').appendChild(remove)}list.appendChild(row)
     });
-    document.getElementById('queueBadge').textContent=`${String(jobs.length).padStart(2,'0')} JOB${jobs.length===1?'':'S'}`;document.getElementById('jobCount').textContent=String(jobs.length).padStart(2,'0');document.getElementById('queueHours').innerHTML=`${jobs.reduce((sum,j)=>sum+Number(j.duration),0).toFixed(1)}<small>hours</small>`;
-    const next=sorted[0];document.getElementById('nextAvailable').innerHTML=next?`${formatClock(next.start).split(':')[0]}<small>${formatClock(next.start).slice(-2)}</small>`:'Now'
+    document.getElementById('queueBadge').textContent=`${String(jobs.length).padStart(2,'0')} JOB${jobs.length===1?'':'S'}`
   }
   function filterQueueRows(){const query=document.getElementById('queueSearch').value.trim().toLowerCase(),status=document.getElementById('queueStatus').value;document.querySelectorAll('#queueList .queue-item').forEach(row=>{const matchesText=row.textContent.toLowerCase().includes(query),matchesStatus=status==='all'||row.querySelector('.job-state').textContent===status;row.hidden=!(matchesText&&matchesStatus)})}
   const queueObserver=new MutationObserver(filterQueueRows);queueObserver.observe(document.getElementById('queueList'),{childList:true});document.getElementById('queueSearch').addEventListener('input',filterQueueRows);document.getElementById('queueStatus').addEventListener('change',filterQueueRows);document.getElementById('refreshQueue').addEventListener('click',loadSharedData);
@@ -114,14 +107,13 @@
     const jobInterval=job=>{const start=new Date(`${job.date||localDate(today)}T${String(job.start).slice(0,5)}:00`);return{start:start.getTime(),end:start.getTime()+Number(job.duration)*3600000}};
     axis.replaceChildren();rows.replaceChildren();
     for(let hour=0;hour<=24;hour+=4){const tick=document.createElement('span');tick.style.left=`${hour/24*100}%`;tick.textContent=hour===0||hour===24?'12 AM':hour===12?'12 PM':hour<12?`${hour} AM`:`${hour-12} PM`;axis.appendChild(tick)}
-    document.getElementById('activeCount').innerHTML=`${String(printers.length).padStart(2,'0')}<small>printers</small>`;
     document.getElementById('navPrinterCount').textContent=String(printers.length).padStart(2,'0');
     const now=Date.now(),todayDate=localDate(new Date());
     printers.forEach(printer=>{
       const printerJobs=jobs.filter(job=>job.printer===printer.id).map(job=>({...job,...jobInterval(job)})).filter(job=>job.start<dayEndMs&&job.end>dayStartMs).sort((a,b)=>a.start-b.start);
       const activeJobs=printerJobs.filter(job=>job.status!=='Complete'),row=document.createElement('div');row.className='printer-day-row';
       const info=document.createElement('div');info.className='printer-day-info';const name=document.createElement('div');name.className='printer-day-name';name.textContent=printer.name;
-      const unit=document.createElement('div');unit.className='printer-day-unit';unit.textContent=printer.unit;const badge=document.createElement('div');badge.className='printer-day-status';const detail=document.createElement('div');detail.className='printer-day-detail';
+      const unit=document.createElement('div');unit.className='printer-day-unit';unit.textContent=printer.unit+" · "+printerJobs.length+" task"+(printerJobs.length===1?"":"s")+" on this day";const badge=document.createElement('div');badge.className='printer-day-status';const detail=document.createElement('div');detail.className='printer-day-detail';
       const current=activeJobs.find(job=>job.start<=now&&job.end>now),next=activeJobs.find(job=>job.start>now);
       if(date<todayDate){badge.classList.add('past');badge.textContent='DAY FINISHED';detail.textContent=`${printerJobs.length} booking${printerJobs.length===1?'':'s'}`}
       else if(current){badge.classList.add('busy');badge.textContent=current.status==='Printing'?'PRINTING':'IN USE';detail.textContent=`Until ${new Intl.DateTimeFormat('en',{hour:'numeric',minute:'2-digit'}).format(new Date(current.end))}`}
