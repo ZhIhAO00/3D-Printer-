@@ -39,13 +39,11 @@ export default async function handler(req, res) {
 
     if (req.method === 'PUT') {
       const { printers = [], users = [], options = {} } = req.body || {};
-      const optionKeys = ['purposes', 'filaments', 'colors', 'durations', 'times'];
+      const optionKeys = ['purposes', 'filaments', 'colors'];
       if (!Array.isArray(printers) || !Array.isArray(users) || !options || typeof options !== 'object') return reply(res, 400, { error: 'Invalid settings.' });
       for (const key of optionKeys) {
         const values = options[key];
         if (!Array.isArray(values) || !values.length || values.some(value => (typeof value !== 'string' && key !== 'durations') || !String(value).trim())) return reply(res, 400, { error: `Add at least one valid ${key} option.` });
-        if (key === 'durations' && values.some(value => !Number.isFinite(Number(value)) || Number(value) <= 0 || Number(value) > 48)) return reply(res, 400, { error: 'Durations must be between 0 and 48 hours.' });
-        if (key === 'times' && values.some(value => typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value))) return reply(res, 400, { error: 'Start times must use 24-hour HH:MM format.' });
         const normalized = values.map(value => key === 'durations' ? Number(value) : String(value).trim());
         if (new Set(normalized.map(value => String(value).toLowerCase())).size !== normalized.length) return reply(res, 400, { error: `Remove duplicate ${key} options.` });
       }
@@ -85,4 +83,3 @@ export default async function handler(req, res) {
     return reply(res, 500, { error: 'Settings could not be saved. Check the Vercel function logs for the database error.' });
   }
 }
-

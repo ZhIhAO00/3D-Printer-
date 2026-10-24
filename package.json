@@ -2,7 +2,7 @@
   "name": "layerline-print-queue",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vercel dev" },
+  "scripts": { "dev": "vercel dev", "test": "node --test" },
   "dependencies": { "@neondatabase/serverless": "^1.0.2" },
   "devDependencies": { "vercel": "^41.7.0" }
 }

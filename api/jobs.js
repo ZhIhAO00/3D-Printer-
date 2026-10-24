@@ -1,4 +1,7 @@
 import { neon } from '@neondatabase/serverless';
+import '../lib/booking-core.js';
+
+const validateBooking = globalThis.PrintBooking.validateBooking;
 
 const sql = neon(process.env.DATABASE_URL);
 
@@ -22,8 +25,8 @@ export default async function handler(req, res) {
       const { project, person, printer, start, duration, purpose, filament, filamentColor, date } = req.body || {};
       const settingRows = await sql`SELECT setting_key, setting_value FROM queue_settings`;
       const options = Object.fromEntries(settingRows.map(row => [row.setting_key, row.setting_value]));
-      if (![project, person, printer, start, purpose, filament, filamentColor, date].every(v => typeof v === 'string' && v.trim()) || !options.purposes?.includes(purpose) || !options.filaments?.includes(filament) || !options.colors?.includes(filamentColor) || !options.durations?.includes(Number(duration)) || !options.times?.includes(start) || !/^\d{2}:\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-        return respond(res, 400, { error: 'Please provide valid booking details.' });
+      if (!validateBooking({ project, person, printer, start, duration, purpose, filament, filamentColor, date }, options)) {
+        return respond(res, 400, { error: 'Enter a valid start time, duration, and booking details.' });
       }
 
       const [availablePrinter] = await sql`SELECT id FROM printers WHERE id = ${printer.trim()} AND enabled = true`;
@@ -54,4 +57,3 @@ export default async function handler(req, res) {
     return respond(res, 500, { error: 'The queue could not be loaded or saved.' });
   }
 }
-
