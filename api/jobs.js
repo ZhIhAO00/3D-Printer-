@@ -11,15 +11,18 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const jobs = await sql`SELECT id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, purpose, filament, filament_color, status, to_char(job_date, 'YYYY-MM-DD') AS date FROM jobs ORDER BY job_date, start_time`;
-      return respond(res, 200, { jobs });
+      const [jobs, settingRows] = await Promise.all([
+        sql`SELECT id, project, person, printer, to_char(start_time, 'HH24:MI') AS start, duration, purpose, filament, filament_color, status, to_char(job_date, 'YYYY-MM-DD') AS date FROM jobs ORDER BY job_date, start_time`,
+        sql`SELECT setting_key, setting_value FROM queue_settings`
+      ]);
+      return respond(res, 200, { jobs, options: Object.fromEntries(settingRows.map(row => [row.setting_key, row.setting_value])) });
     }
 
     if (req.method === 'POST') {
       const { project, person, printer, start, duration, purpose, filament, filamentColor, date } = req.body || {};
-      const purposes = ['Testing', 'MO Project', 'CR Project', 'New Product', 'Nice Project'];
-      const filaments = ['PLA-Basic', 'PLA-Matte', 'PETG-Basic', 'PETG-HF', 'ABS', 'ABS-GF', 'TPU 90A', 'Onyx'];
-      if (![project, person, printer, start, purpose, filament, filamentColor, date].every(v => typeof v === 'string' && v.trim()) || !purposes.includes(purpose) || !filaments.includes(filament) || !Number.isFinite(Number(duration)) || Number(duration) <= 0 || Number(duration) > 48 || !/^\d{2}:\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const settingRows = await sql`SELECT setting_key, setting_value FROM queue_settings`;
+      const options = Object.fromEntries(settingRows.map(row => [row.setting_key, row.setting_value]));
+      if (![project, person, printer, start, purpose, filament, filamentColor, date].every(v => typeof v === 'string' && v.trim()) || !options.purposes?.includes(purpose) || !options.filaments?.includes(filament) || !options.colors?.includes(filamentColor) || !options.durations?.includes(Number(duration)) || !options.times?.includes(start) || !/^\d{2}:\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
         return respond(res, 400, { error: 'Please provide valid booking details.' });
       }
 
@@ -45,8 +48,10 @@ export default async function handler(req, res) {
     return respond(res, 405, { error: 'Method not allowed.' });
   } catch (error) {
     console.error('Queue API error:', error);
+    if (error.code === '42P01' && error.message?.includes('queue_settings')) return respond(res, 503, { error: 'Booking options are not configured. Run migrations/004_admin_booking_options.sql in Neon.' });
     if (error.code === '42P01') return respond(res, 503, { error: 'Queue table is missing. Run migrations/001_create_jobs.sql in Neon.' });
     if (error.code === '42703') return respond(res, 503, { error: 'Database schema is out of date. Run the latest SQL migrations in Neon.' });
     return respond(res, 500, { error: 'The queue could not be loaded or saved.' });
   }
 }
+
