@@ -22,14 +22,35 @@ test('Print queue includes the 24-hour availability calendar', () => {
   assert.match(html, /for\(let hour=0;hour<=24;hour\+=4\)/);
 });
 
-test('workspace has only Print queue and Printers views', () => {
+test('workspace navigation separates queue, printers, print history, and utilization', () => {
   assert.match(html, /<div class="content-grid workspace-view" id="queue">/);
   assert.match(html, /\.workspace-view\[hidden\]\{display:none!important\}/);
   assert.match(html, /section\.id==='queueSchedule'\?view!=='queue'/);
-  assert.match(html, /view=requested==='printers'\?'printers':'queue'/);
+  assert.match(html, /view=\['printers','history','utilization'\]\.includes\(requested\)\?requested:'queue'/);
   assert.doesNotMatch(html, /requested==='schedule'|schedule:'Schedule'/);
   assert.match(html, /function showWorkspaceView\(\)/);
   assert.match(html, /addEventListener\('hashchange',showWorkspaceView\)/);
+  for (const view of ['printers', 'history', 'utilization']) assert.match(html, new RegExp(`href="#${view}"`));
+});
+
+test('print history is a searchable table with all requested booking details', () => {
+  assert.match(html, /id="history"[^>]*hidden/);
+  for (const heading of ['Date', 'Start time', 'Duration', 'Project \/ part', 'Who booked', 'Purpose', 'Printer', 'Filament', 'Color']) {
+    assert.ok(html.includes(`<th>${heading}</th>`), `Missing history column: ${heading}`);
+  }
+  assert.match(html, /function renderHistory\(\)/);
+  assert.match(html, /historySearch'\)\.addEventListener\('input',renderHistory\)/);
+  assert.match(html, /const all=jobs\.slice\(\)\.sort\(\(a,b\)=>\(b\.date/);
+});
+
+test('utilization reports per-printer booked time over a selected date range', () => {
+  assert.match(html, /id="utilization"[^>]*hidden/);
+  assert.match(html, /id="utilFrom" type="date"/);
+  assert.match(html, /id="utilTo" type="date"/);
+  assert.match(html, /id="utilRows"/);
+  assert.match(html, /capacity=days\*24/);
+  assert.match(html, /Math\.max\(0,Math\.min\(end,rangeEnd\)-Math\.max\(start,rangeStart\)\)/);
+  assert.match(html, /not live machine telemetry/);
 });
 
 test('workspace markup contains no visible escaped newline text', () => {
